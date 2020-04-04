@@ -41,17 +41,14 @@
             <i class="el-icon-setting"></i>接口自动化
           </template>
           <el-menu-item-group>
-            <template slot="title">分组一</template>
-            <el-menu-item index="3-1">选项1</el-menu-item>
-            <el-menu-item index="3-2">选项2</el-menu-item>
+            <!-- <template slot="title">分组一</template> -->
+            <el-menu-item index="3-1">接口管理</el-menu-item>
+            <el-menu-item index="3-2">接口管理(新)</el-menu-item>
+            <el-menu-item index="3-3">用例管理</el-menu-item>
+            <el-menu-item index="3-4">用例集管理</el-menu-item>
+            <el-menu-item index="3-5">执行计划</el-menu-item>
+            <el-menu-item index="3-6">测试报告</el-menu-item>
           </el-menu-item-group>
-          <el-menu-item-group title="分组2">
-            <el-menu-item index="3-3">选项3</el-menu-item>
-          </el-menu-item-group>
-          <el-submenu index="3-4">
-            <template slot="title">选项4</template>
-            <el-menu-item index="3-4-1">选项4-1</el-menu-item>
-          </el-submenu>
         </el-submenu>
       </el-menu>
     </el-aside>
@@ -68,22 +65,16 @@
         </el-dropdown>
         <span>王小虎</span>
       </el-header>
-
       <el-main>
-        <!-- Tab头 -->
-        <v-siderBar></v-siderBar>
-
+        <el-tabs v-model="activeName" @tab-click="handleClick" closable @tab-remove="removeTab">
+          <el-tab-pane label="接口列表" name="接口列表"></el-tab-pane>
+          <el-tab-pane label="新建接口" name="新建接口" v-if="isNewAPITab"></el-tab-pane>
+        </el-tabs>
         <!-- 表单1：接口列表 -->
-        <v-searchBar></v-searchBar>
-        <div class="new-button"><el-button>新增接口</el-button></div>
-        <v-APIList></v-APIList>
-        
-
+        <v-APIList v-if="isAPIList" v-on:listenToChildEvent="Receive"></v-APIList>
         <!-- 表单2： 新建接口表单 -->
-        <!-- <v-newapi></v-newapi> -->
-
-
-
+        <v-newapi v-if="isnewapi"></v-newapi>
+        <!-- <v-test></v-test> -->
       </el-main>
     </el-container>
   </el-container>
@@ -96,23 +87,43 @@
 3. 使用 */
 import SiderBar from "./components/SiderBar.vue";
 import APIList from "./components/APIList.vue";
-import searchBar from "./components/searchBar.vue";
 import NewAPI from "./components/NewAPI.vue";
+import test from "./components/test.vue";
 
 export default {
   name: "App",
   components: {
     "v-siderBar": SiderBar,
     "v-APIList": APIList,
-    "v-searchBar":searchBar,
     "v-newapi": NewAPI,
+    "v-test": test,
   },
 
   data() {
     return {
       restaurants: [],
       state1: "",
-      state2: ""
+      state2: "",
+      comName: "v-APIList",
+      isAPIList: true,
+      isnewapi: false,
+      activeName: "接口列表",
+      isNewAPITab: false,
+      // for tab add/remove:
+      editableTabsValue: "2",
+      editableTabs: [
+        {
+          title: "Tab 1",
+          name: "1",
+          content: "Tab 1 content"
+        },
+        {
+          title: "Tab 2",
+          name: "2",
+          content: "Tab 2 content"
+        }
+      ],
+      tabIndex: 2
     };
   },
   methods: {
@@ -253,11 +264,70 @@ export default {
     },
     handleSelect(item) {
       console.log(item);
+    },
+    handleClick(tab) {
+      if (tab.name == "接口列表") {
+        this.isAPIList = true;
+        this.isnewapi = false;
+      } else if (tab.name == "新建接口") {
+        this.isAPIList = false;
+        this.isnewapi = true;
+      }
+    },
+    Receive: function(data) {
+      if (data == true) {
+        this.isNewAPITab = true;
+        this.isnewapi = true;
+        this.isAPIList = false;
+        this.activeName = "新建接口";
+      }
+    },
+    removeTab: function() {
+      // let tabs = this.editableTabs;
+      // console.log(tabs, targetName);
+      console.log("removeTab...");
+      this.isNewAPITab = false;
+      this.isnewapi = false;
+      this.isAPIList = true;
+      this.activeName = "接口列表";
+    },
+    mounted() {
+      this.restaurants = this.loadAll();
     }
-  },
-  mounted() {
-    this.restaurants = this.loadAll();
+    // End of method
   }
+
+  // For Tab add/remove
+  // addTab(targetName) {
+  //   let newTabName = ++this.tabIndex + "";
+  //   this.editableTabs.push({
+  //     title: "New Tab",
+  //     name: newTabName,
+  //     content: "New Tab content"
+  //   });
+  //   this.editableTabsValue = newTabName;
+  // },
+  // removeTab:function(){
+  //   let tabs = this.editableTabs;
+  //   console.log(tabs,targetName);
+  //   this.isNewAPITab = false;
+  //   this.isnewapi = false;
+  //   this.isAPIList = true;
+  //   this.activeName = "接口列表";
+  // let activeName = this.editableTabsValue;
+  // if (activeName === targetName) {
+  //   tabs.forEach((tab, index) => {
+  //     if (tab.name === targetName) {
+  //       let nextTab = tabs[index + 1] || tabs[index - 1];
+  //       if (nextTab) {
+  //         activeName = nextTab.name;
+  //       }
+  //     }
+  //   });
+  // }
+  // this.editableTabsValue = activeName;
+  // this.editableTabs = tabs.filter(tab => tab.name !== targetName);
+  // }
 };
 </script>
 
@@ -300,9 +370,44 @@ div {
 .el-icon-arrow-down {
   font-size: 12px;
 }
+/* .el-main{
+  position: relative;
+} */
 
-.new-button{
-  margin:10px;
+.item-tab {
+  position: relative;
+  display: inline-block;
+  height: 40px;
+  box-sizing: border-box;
+  list-style: none;
+  font-size: 14px;
+}
+.item-tab {
+  border: black 1px solid;
 }
 
+.item-tab el-tab-pane {
+  display: inline;
+}
+
+.item-tab .el-icon-close {
+  border-radius: 50%;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  margin-left: 5px;
+}
+
+[class*=" el-icon-"],
+[class^="el-icon-"] {
+  font-family: element-icons !important;
+  /* speak:none; */
+  font-style: normal;
+  font-weight: 400;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  vertical-align: baseline;
+  display: inline-block;
+  -webkit-font-smoothing: antialiased;
+}
 </style>
